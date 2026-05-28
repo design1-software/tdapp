@@ -39,6 +39,9 @@ The name follows federal naming convention. Government programs run on acronyms.
 - **Clear completed** — remove all completed tasks in one action
 - **Inline edit** — update task title without deleting and recreating
 
+### AI Feature
+- **Day Brief** — on-demand button calls Claude Sonnet 4.6 (Anthropic API) with the current task list and returns a structured daily brief: situation overview, active tasks, completed in the last 24 hours, and AI-recommended priority order. System prompt is a strict JSON schema contract; every field is validated by Pydantic before anything renders.
+
 ---
 
 ## Architecture & Deployment
@@ -76,16 +79,18 @@ The React frontend makes HTTP requests to the Railway API URL. That URL is set i
 tdapp/
 ├── backend/
 │   ├── main.py                 # App entry point, CORS config, router registration
-│   ├── models.py               # Pydantic models: Task, TaskCreate, TaskUpdate
+│   ├── models.py               # Pydantic models: Task, TaskCreate, TaskUpdate, BriefResponse
 │   ├── database.py             # SQLite connection, table init, all CRUD functions
 │   ├── routers/
-│   │   └── tasks.py            # Route handlers — thin layer, logic in database.py
+│   │   ├── tasks.py            # Route handlers — thin layer, logic in database.py
+│   │   └── brief.py            # POST /brief — Claude Sonnet call, JSON validation, response
 │   ├── tests/
-│   │   └── test_tasks.py       # pytest suite using FastAPI TestClient
+│   │   ├── test_tasks.py       # pytest suite using FastAPI TestClient (24 tests)
+│   │   └── test_brief.py       # Brief endpoint tests — mocks Claude, tests validation (8 tests)
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── components/         # TaskInput, TaskItem, TaskList, FilterBar
+│   │   ├── components/         # TaskInput, TaskItem, TaskList, FilterBar, DayBrief
 │   │   ├── api.js              # Axios wrapper — all backend calls in one place
 │   │   └── App.jsx             # Root component, state management
 │   ├── .env.example            # VITE_API_URL placeholder
@@ -156,6 +161,7 @@ Full interactive documentation at [tdapp-production.up.railway.app/docs](https:/
 | `PATCH /tasks/{id}` | Update title, completion status, or due date. Partial updates supported. |
 | `DELETE /tasks/{id}` | Delete a task by ID. Returns 404 if not found. |
 | `DELETE /tasks/completed` | Delete all completed tasks in one operation. |
+| `POST /brief` | Generate an AI-powered Day Brief via Claude Sonnet 4.6. Returns situation, active tasks, recently completed, and priority order. Requires `ANTHROPIC_API_KEY` on the server. |
 
 ---
 
@@ -171,6 +177,7 @@ Every decision below was made against the specific constraints of this exercise 
 | **pytest + TestClient** | Tests actual HTTP endpoints end-to-end — route handler, Pydantic validation, database, and response — not just isolated functions. This is what critical path testing means in practice. |
 | **Railway + Netlify** | Two platforms because two fundamentally different runtime types. See Architecture section above. |
 | **Vite over Create React App** | CRA is deprecated. Vite is the current standard — faster builds, smaller output, actively maintained. |
+| **Anthropic SDK + Claude Sonnet 4.6** | System prompt defines an explicit JSON schema — Claude returns structured data, not prose. Pydantic validates every field before anything reaches the client. `_call_claude()` is isolated into its own function so tests can patch it cleanly without making real API calls. |
 
 ---
 
@@ -183,6 +190,9 @@ Every decision below was made against the specific constraints of this exercise 
 | `PATCH` or `DELETE` with nonexistent ID | 404 with descriptive message — not a generic 500 |
 | Invalid `?status=` filter value | 422 — valid values are `complete` and `incomplete` only |
 | Frontend API call fails | Error caught, user-facing message displayed — no silent failures, no blank screen |
+| `POST /brief` — no API key | 503 with clear message — checked before any API call is made |
+| `POST /brief` — Claude returns bad JSON | 502 — `json.loads()` fails, Pydantic never runs, error is explicit |
+| `POST /brief` — Claude omits a required field | 502 — Pydantic `BriefSection(**data)` raises `ValidationError` before any output is returned |
 
 ---
 
@@ -200,22 +210,23 @@ The choices below were made deliberately given the 2–3 hour time constraint. E
 
 ---
 
+## What Is Shipped — Day Brief
+
+The AI Day Brief feature is live. Clicking **✦ Generate Day Brief** in the app calls `POST /brief`, which:
+
+1. Pulls all tasks from the database
+2. Splits them: active tasks vs. completed in the last 24 hours (tracked by `completed_at` timestamp)
+3. Sends both lists to Claude Sonnet 4.6 via the Anthropic SDK with a strict system prompt that specifies the exact JSON schema to return
+4. Validates every field in the response with Pydantic before returning anything to the client
+5. Renders four sections in the UI: **Situation**, **Priority Order**, **Active Tasks**, **Completed (24h)**
+
+The system prompt is treated as an API contract, not a suggestion. If Claude returns malformed output or omits a field, the endpoint returns 502 — it does not forward unvalidated AI output.
+
 ## What Is Planned — Phase 2
 
-The following feature is designed and ready to build. It was intentionally deferred to keep the Phase 1 submission clean and on time.
+### Scheduled Daily Email
 
-### TDApp Day Brief — AI-Powered Daily Summary
-
-On-demand button press calls Claude Sonnet (via the Anthropic API) with the current task list and returns a structured daily brief in OPORD format:
-
-- **Situation** — overall task load and completion status
-- **Tasks for Today** — active tasks in priority order
-- **Completed Yesterday** — tasks marked complete in the last 24 hours
-- **Priority Order** — recommended execution sequence
-
-The system prompt is treated as an API contract — explicit JSON schema, field-by-field validation before any output renders. An API that can return bad output gets explicit failure handling, not trust.
-
-Phase 2 version adds an APScheduler job delivering the brief by email at 0700 local time.
+The remaining Phase 2 item: an APScheduler job that runs at 0700 local time, calls the same `POST /brief` logic, and delivers the brief by email. The generation and validation logic is already built — Phase 2 adds the scheduler and the email transport layer.
 
 ---
 
@@ -223,8 +234,8 @@ Phase 2 version adds an APScheduler job delivering the brief by email at 0700 lo
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `VITE_API_URL` | `frontend/.env` | Points to the Railway backend URL |
-| `ANTHROPIC_API_KEY` | `backend/.env` | Phase 2 only — not required for Phase 1 |
+| `VITE_API_URL` | `frontend/.env` | Points to the Railway backend URL — must include `https://` |
+| `ANTHROPIC_API_KEY` | `backend/.env` | Required for `POST /brief` (Day Brief feature). Set in Railway environment variables. |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
 
