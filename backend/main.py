@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import database
-from routers import tasks
+from routers import tasks, brief
 
 # 📘 FastAPI() creates the application object — everything connects to this.
 # title and description appear in the auto-generated /docs API explorer.
@@ -32,5 +32,8 @@ app.add_middleware(
 # This is safe to call every time: CREATE TABLE IF NOT EXISTS never overwrites existing data.
 database.init_db()
 
-# 📘 include_router attaches all the /tasks routes defined in routers/tasks.py to the app.
+# 📘 include_router attaches route groups to the app.
+# tasks.router handles /tasks — CRUD operations.
+# brief.router handles /brief — AI-powered Day Brief (Phase 2).
 app.include_router(tasks.router)
+app.include_router(brief.router)

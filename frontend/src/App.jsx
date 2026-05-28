@@ -10,18 +10,23 @@ import {
   updateTask,
   deleteTask,
   deleteCompleted,
+  generateBrief,
 } from "./api";
 import TaskInput  from "./components/TaskInput";
 import FilterBar  from "./components/FilterBar";
 import TaskList   from "./components/TaskList";
+import DayBrief   from "./components/DayBrief";
 import styles     from "./App.module.css";
 
 export default function App() {
   // 📘 useState declares state variables. React re-renders the component whenever state changes.
-  const [tasks,   setTasks]   = useState([]);       // Full list from the database
-  const [filter,  setFilter]  = useState("all");    // 'all' | 'active' | 'completed'
-  const [loading, setLoading] = useState(true);
-  const [error,   setError]   = useState(null);
+  const [tasks,        setTasks]        = useState([]);    // Full list from the database
+  const [filter,       setFilter]       = useState("all"); // 'all' | 'active' | 'completed'
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState(null);
+  const [brief,        setBrief]        = useState(null);  // BriefResponse or null
+  const [briefLoading, setBriefLoading] = useState(false);
+  const [briefError,   setBriefError]   = useState(null);
 
   // ── FETCH ──────────────────────────────────────────────────────────────────
 
@@ -95,6 +100,22 @@ export default function App() {
     }
   }
 
+  // ── DAY BRIEF ──────────────────────────────────────────────────────────────
+
+  async function handleGenerateBrief() {
+    try {
+      setBriefLoading(true);
+      setBriefError(null);
+      const res = await generateBrief(); // POST /brief
+      setBrief(res.data);
+    } catch (err) {
+      const msg = err.response?.data?.detail ?? "Failed to generate brief.";
+      setBriefError(msg);
+    } finally {
+      setBriefLoading(false);
+    }
+  }
+
   // ── CLEAR COMPLETED ────────────────────────────────────────────────────────
 
   async function handleClearCompleted() {
@@ -146,6 +167,15 @@ export default function App() {
             </button>
           </div>
         )}
+
+        {/* AI Day Brief — button shown always; panel shown after generation */}
+        <DayBrief
+          brief={brief}
+          loading={briefLoading}
+          error={briefError}
+          onGenerate={handleGenerateBrief}
+          onDismiss={() => { setBrief(null); setBriefError(null); }}
+        />
 
         {/* Task creation form */}
         <TaskInput onAdd={handleAdd} />

@@ -1,0 +1,159 @@
+/* 📘 WHAT THIS FILE DOES: Styles for the DayBrief AI panel.
+   The panel uses a distinct visual treatment to stand out from the task list.
+   🔗 CSS reference: https://www.w3schools.com/css/ */
+
+/* ── WRAPPER ── */
+.wrapper {
+  margin-bottom: 0.75rem;
+}
+
+/* ── GENERATE BUTTON ── */
+.generateBtn {
+  width: 100%;
+  padding: 0.6rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+  transition: background 0.15s ease, opacity 0.15s ease;
+  box-shadow: var(--shadow);
+}
+
+.generateBtn:hover:not(:disabled) {
+  background: #334155; /* Slightly lighter slate on hover */
+}
+
+.generateBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── ERROR ── */
+.error {
+  font-size: 0.85rem;
+  color: var(--color-danger);
+  padding: 0.4rem 0;
+  text-align: center;
+}
+
+/* ── PANEL ── */
+.panel {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  border-left: 3px solid var(--color-primary); /* Accent stripe — visual anchor */
+  padding: 1rem 1.25rem;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.panelTitle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--color-primary);
+  margin-right: 0.5rem;
+}
+
+.panelMeta {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+}
+
+.dismissBtn {
+  color: var(--color-muted);
+  font-size: 0.8rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+  flex-shrink: 0;
+}
+
+.dismissBtn:hover {
+  background: #f1f5f9;
+  color: var(--color-text);
+}
+
+/* ── SITUATION TEXT ── */
+.situation {
+  font-size: 0.9rem;
+  color: var(--color-text);
+  line-height: 1.5;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* ── SECTIONS GRID ── */
+/* 📘 CSS Grid creates a two-column layout on wider screens.
+   auto-fit + minmax collapses to one column on narrow screens. */
+.sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.section {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 0.6rem 0.75rem;
+}
+
+.sectionTitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 0.4rem;
+}
+
+.blue  { color: var(--color-accent);  }
+.green { color: var(--color-success); }
+
+/* 📘 <ol> provides numbered ordering — appropriate for priority-ranked lists */
+.list {
+  list-style: decimal;
+  padding-left: 1.1rem;
+  margin: 0;
+}
+
+.listItem {
+  font-size: 0.85rem;
+  color: var(--color-text);
+  line-height: 1.6;
+}
+
+.emptySection {
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  font-style: italic;
+}
+
+/* ── REGENERATE BUTTON ── */
+.regenerateBtn {
+  font-size: 0.8rem;
+  color: var(--color-muted);
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: color 0.1s ease, background 0.1s ease;
+}
+
+.regenerateBtn:hover:not(:disabled) {
+  color: var(--color-text);
+  background: #f1f5f9;
+}
+
+.regenerateBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

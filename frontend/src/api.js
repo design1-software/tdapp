@@ -57,3 +57,12 @@ export const deleteTask = (id) => api.delete(`/tasks/${id}`);
  * @returns {Promise} axios response
  */
 export const deleteCompleted = () => api.delete("/tasks/completed");
+
+// ── BRIEF API FUNCTION ──────────────────────────────────────────────────────
+
+/**
+ * Generate an AI-powered Day Brief using Claude Sonnet.
+ * Requires ANTHROPIC_API_KEY to be configured on the backend.
+ * @returns {Promise} axios response with BriefResponse in .data
+ */
+export const generateBrief = () => api.post("/brief");
