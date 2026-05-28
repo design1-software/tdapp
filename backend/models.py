@@ -54,8 +54,8 @@ class Task(BaseModel):
 
 # ── Day Brief models (Phase 2) ────────────────────────────────────────────────
 
-# 📘 BriefSection is the shape OpenAI must return — treated as a strict contract.
-# Every field is required. If OpenAI omits one, Pydantic raises a ValidationError
+# 📘 BriefSection is the shape Claude must return — treated as a strict contract.
+# Every field is required. If Claude omits one, Pydantic raises a ValidationError
 # and the endpoint returns 502 instead of passing bad data to the client.
 class BriefSection(BaseModel):
     situation: str               # 1-2 sentences: overall task load and completion status
