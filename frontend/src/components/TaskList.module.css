@@ -1,0 +1,22 @@
+/* 📘 WHAT THIS FILE DOES: Styles the task list container and empty state.
+   🔗 CSS reference: https://www.w3schools.com/css/ */
+
+/* 📘 list-style: none removes the bullet points that <ul> adds by default */
+.list {
+  list-style: none;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;  /* Clips child border-radius corners cleanly */
+}
+
+/* Centered placeholder when no tasks exist */
+.empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--color-muted);
+  font-size: 0.95rem;
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}

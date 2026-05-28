@@ -1,0 +1,58 @@
+/* 📘 WHAT THIS FILE DOES: Global CSS reset and design token definitions.
+   These styles apply to the entire application.
+   🔗 CSS reference: https://www.w3schools.com/css/ */
+
+/* 📘 CSS custom properties (variables) defined on :root are available everywhere.
+   Change a color here and it updates every component that uses it. */
+:root {
+  --color-primary:   #1e293b;   /* Dark slate — header background, primary text */
+  --color-accent:    #3b82f6;   /* Blue — buttons, focus rings, active states */
+  --color-success:   #16a34a;   /* Green — checkboxes, completed indicators */
+  --color-danger:    #dc2626;   /* Red — delete buttons */
+  --color-bg:        #f1f5f9;   /* Light slate — page background */
+  --color-card:      #ffffff;   /* White — card surfaces */
+  --color-border:    #e2e8f0;   /* Subtle border color */
+  --color-text:      #1e293b;   /* Primary text */
+  --color-muted:     #94a3b8;   /* Secondary text, completed task titles */
+
+  --radius:   8px;              /* Consistent border radius across components */
+  --shadow:   0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.06);
+}
+
+/* 📘 The box-sizing rule makes width/height include padding and borders.
+   Without it, adding padding would make elements wider than expected.
+   🔗 Learn more: https://www.w3schools.com/css/css_boxmodel.asp */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* 📘 body styles apply to the entire page.
+   min-height: 100vh ensures the background fills the full viewport even on short pages. */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", sans-serif;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* 📘 button reset — removes browser default styles so we can fully control them */
+button {
+  cursor: pointer;
+  border: none;
+  background: none;
+  font: inherit;
+}
+
+/* 📘 input reset — removes default browser appearance */
+input {
+  font: inherit;
+  border: none;
+  outline: none;
+}

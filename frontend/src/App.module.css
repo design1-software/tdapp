@@ -1,0 +1,82 @@
+/* 📘 WHAT THIS FILE DOES: Layout and header styles for the App root component.
+   Uses CSS Grid and Flexbox to build a centered, full-height layout.
+   🔗 CSS Grid reference: https://www.w3schools.com/css/css_grid.asp */
+
+/* ── PAGE SHELL ── */
+.page {
+  display: flex;
+  flex-direction: column; /* 📘 Stack header and main vertically */
+  min-height: 100vh;
+}
+
+/* ── HEADER ── */
+.header {
+  background: var(--color-primary);
+  color: #fff;
+  padding: 1.25rem 1.5rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.headerInner {
+  max-width: 680px;
+  margin: 0 auto;
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #fff;
+}
+
+.tagline {
+  font-size: 0.82rem;
+  color: #94a3b8;    /* Muted slate — readable on dark background */
+  font-weight: 400;
+}
+
+/* ── MAIN CONTENT ── */
+.main {
+  flex: 1;            /* 📘 flex: 1 makes main fill remaining space below the header */
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+/* ── ERROR BANNER ── */
+.errorBanner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  border-radius: var(--radius);
+  padding: 0.65rem 1rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+}
+
+.errorClose {
+  color: #dc2626;
+  font-size: 0.8rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  transition: background 0.1s ease;
+}
+
+.errorClose:hover {
+  background: #fee2e2;
+}
+
+/* ── LOADING STATE ── */
+.loading {
+  text-align: center;
+  color: var(--color-muted);
+  padding: 2rem;
+  font-size: 0.95rem;
+}

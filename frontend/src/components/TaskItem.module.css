@@ -1,0 +1,139 @@
+/* 📘 WHAT THIS FILE DOES: Styles for a single task row.
+   Uses flexbox to align the checkbox, title, and action buttons on one line.
+   Completed tasks get a strikethrough and muted color — a visual distinction.
+   🔗 CSS transitions: https://www.w3schools.com/css/css3_transitions.asp */
+
+.item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  transition: background 0.1s ease;
+  list-style: none;   /* 📘 Removes the default bullet point from <li> */
+}
+
+.item:last-child {
+  border-bottom: none; /* No divider after the last item */
+}
+
+.item:hover {
+  background: #f8fafc; /* Subtle highlight on hover */
+}
+
+/* 📘 The .completed modifier class is added dynamically by React when task.completed is true */
+.completed .title {
+  text-decoration: line-through; /* Visual distinction: strikethrough for done tasks */
+  color: var(--color-muted);     /* Muted color signals the task is finished */
+}
+
+/* ── CHECKBOX ── */
+/* 📘 appearance: none removes the browser's default checkbox so we can style it */
+.checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-radius: 50%;               /* Circle shape */
+  cursor: pointer;
+  flex-shrink: 0;                   /* Don't let it shrink when title is long */
+  position: relative;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.checkbox:hover {
+  border-color: var(--color-success);
+}
+
+/* 📘 :checked applies when the checkbox is ticked */
+.checkbox:checked {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+/* 📘 The ::after pseudo-element draws the white checkmark inside the circle */
+.checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 2px;
+  width: 6px;
+  height: 10px;
+  border: 2px solid white;
+  border-top: none;
+  border-left: none;
+  transform: rotate(45deg);
+}
+
+/* ── CONTENT (title + due date) ── */
+.content {
+  flex: 1;             /* Take up remaining space between checkbox and buttons */
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  min-width: 0;        /* Allows text to truncate instead of overflowing */
+}
+
+.title {
+  font-size: 0.95rem;
+  color: var(--color-text);
+  cursor: pointer;
+  word-break: break-word;
+  user-select: none;   /* Prevent accidental text selection on double-click */
+}
+
+.dueDate {
+  font-size: 0.75rem;
+  color: var(--color-muted);
+}
+
+/* ── INLINE EDIT INPUT ── */
+.editInput {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  border: 1.5px solid var(--color-accent);
+  border-radius: 4px;
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: #fff;
+}
+
+/* ── ACTION BUTTONS ── */
+.actions {
+  display: flex;
+  gap: 0.25rem;
+  /* 📘 opacity/visibility hides buttons until hover, revealed via .item:hover below */
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.item:hover .actions {
+  opacity: 1; /* Show buttons when hovering the row */
+}
+
+.editBtn,
+.deleteBtn {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  transition: background 0.1s ease;
+}
+
+.editBtn:hover {
+  background: #e0f2fe; /* Light blue */
+}
+
+.deleteBtn {
+  color: var(--color-danger);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.deleteBtn:hover {
+  background: #fee2e2; /* Light red */
+}

@@ -1,0 +1,77 @@
+/* 📘 WHAT THIS FILE DOES: Styles for the TaskInput form component.
+   CSS Modules scope these class names to this component only — no global leakage.
+   🔗 CSS Flexbox reference: https://www.w3schools.com/css/css3_flexbox.asp */
+
+.form {
+  background: var(--color-card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* 📘 Flexbox makes the inputs and button sit side by side on one row.
+   'gap' adds equal spacing between flex children. */
+.inputRow {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.titleInput {
+  flex: 1;                        /* 📘 flex: 1 makes this input grow to fill available space */
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  transition: border-color 0.15s ease;
+}
+
+.titleInput:focus {
+  border-color: var(--color-accent); /* Blue border when the user is typing */
+  background: #fff;
+}
+
+.titleInput::placeholder {
+  color: var(--color-muted);
+}
+
+.dateInput {
+  padding: 0.6rem 0.5rem;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  color: var(--color-text);
+  background: var(--color-bg);
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+  min-width: 130px;
+}
+
+.dateInput:focus {
+  border-color: var(--color-accent);
+  background: #fff;
+}
+
+.addButton {
+  padding: 0.6rem 1.1rem;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: var(--radius);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  background: #2563eb; /* Slightly darker blue on hover */
+}
+
+/* 📘 :disabled styles apply when the button has the disabled attribute */
+.addButton:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}

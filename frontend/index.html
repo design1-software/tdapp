@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<!-- 📘 Every HTML page starts with <!DOCTYPE html> — tells the browser this is HTML5 -->
+<!-- 🔗 HTML reference: https://www.w3schools.com/html/ -->
+<html lang="en">
+  <head>
+    <!-- 📘 <head> contains metadata — information about the page, not visible content -->
+    <meta charset="UTF-8" />
+    <!-- 📘 viewport meta tag makes the page responsive on mobile devices -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>TDApp — Task Manager</title>
+  </head>
+  <body>
+    <!-- 📘 <div id="root"> is where React mounts the entire application.
+         React replaces this empty div with all the components it renders. -->
+    <div id="root"></div>
+    <!-- 📘 type="module" loads the JS as an ES Module — required for Vite's import system -->
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
