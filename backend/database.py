@@ -49,19 +49,27 @@ def _db():
 
 
 def init_db() -> None:
-    """Create the tasks table if it doesn't already exist."""
+    """Create the tasks table if it doesn't already exist, and run any pending migrations."""
     with _db() as conn:
         # 📘 CREATE TABLE IF NOT EXISTS is safe to call every time the app starts.
         # It only creates the table the very first time — never overwrites existing data.
         conn.execute("""
             CREATE TABLE IF NOT EXISTS tasks (
-                id          INTEGER PRIMARY KEY AUTOINCREMENT,
-                title       TEXT    NOT NULL,
-                completed   INTEGER NOT NULL DEFAULT 0,
-                due_date    TEXT,
-                created_at  TEXT    NOT NULL
+                id           INTEGER PRIMARY KEY AUTOINCREMENT,
+                title        TEXT    NOT NULL,
+                completed    INTEGER NOT NULL DEFAULT 0,
+                due_date     TEXT,
+                created_at   TEXT    NOT NULL,
+                completed_at TEXT
             )
         """)
+        # 📘 ALTER TABLE adds a column to an existing table without destroying data.
+        # The try/except handles the case where the column already exists —
+        # SQLite raises OperationalError if you add a column that's already there.
+        try:
+            conn.execute("ALTER TABLE tasks ADD COLUMN completed_at TEXT")
+        except Exception:
+            pass  # Column already exists — safe to ignore
 
 
 def create_task(title: str, due_date: str | None = None) -> dict:
@@ -116,9 +124,20 @@ def update_task(task_id: int, updates: dict) -> dict | None:
     Apply a partial update to a task.
     'updates' is a dict of only the fields being changed (e.g. {"completed": True}).
     Builds the SET clause dynamically so only provided fields are touched.
+    Automatically sets/clears completed_at when the completed flag changes.
     """
     if not updates:
         return get_task(task_id)
+
+    # 📘 Track when a task was completed so the Day Brief can show "completed recently."
+    # completed=True  → record the timestamp now
+    # completed=False → clear the timestamp (task was un-done)
+    if "completed" in updates:
+        updates = dict(updates)  # Don't mutate the caller's dict
+        if updates["completed"]:
+            updates["completed_at"] = datetime.now(timezone.utc).isoformat()
+        else:
+            updates["completed_at"] = None
 
     # 📘 Build "title = ?, completed = ?" dynamically from the keys in updates
     fields = ", ".join(f"{col} = ?" for col in updates)

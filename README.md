@@ -224,7 +224,7 @@ Phase 2 version adds an APScheduler job delivering the brief by email at 0700 lo
 | Variable | Where | Purpose |
 |---|---|---|
 | `VITE_API_URL` | `frontend/.env` | Points to the Railway backend URL |
-| `OPENAI_API_KEY` | `backend/.env` | Phase 2 only — not required for Phase 1 |
+| `ANTHROPIC_API_KEY` | `backend/.env` | Phase 2 only — not required for Phase 1 |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
 
