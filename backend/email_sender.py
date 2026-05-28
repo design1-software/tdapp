@@ -75,26 +75,32 @@ def send_brief_email(brief_response: BriefResponse) -> None:
     Reads three environment variables:
         EMAIL_FROM         — the Gmail address sending the email
         EMAIL_APP_PASSWORD — Gmail App Password (not your account password)
-        EMAIL_TO           — the recipient address
+        EMAIL_TO           — one or more recipient addresses, comma-separated
+                             e.g. "alice@gmail.com" or "alice@gmail.com, bob@gmail.com"
 
     Raises EnvironmentError if any variable is missing.
     Raises smtplib.SMTPException if the connection or login fails.
     """
-    sender    = os.environ.get("EMAIL_FROM")
-    password  = os.environ.get("EMAIL_APP_PASSWORD")
-    recipient = os.environ.get("EMAIL_TO")
+    sender   = os.environ.get("EMAIL_FROM")
+    password = os.environ.get("EMAIL_APP_PASSWORD")
+    to_raw   = os.environ.get("EMAIL_TO")
 
     # 📘 Check for all three before trying to connect — fail fast with a clear message.
     missing = [k for k, v in {
         "EMAIL_FROM": sender,
         "EMAIL_APP_PASSWORD": password,
-        "EMAIL_TO": recipient,
+        "EMAIL_TO": to_raw,
     }.items() if not v]
 
     if missing:
         raise EnvironmentError(
             f"Missing required email environment variable(s): {', '.join(missing)}"
         )
+
+    # 📘 Split EMAIL_TO on commas so a single variable supports multiple recipients.
+    # "alice@gmail.com, bob@gmail.com" → ["alice@gmail.com", "bob@gmail.com"]
+    # strip() removes any accidental whitespace around each address.
+    recipients = [addr.strip() for addr in to_raw.split(",") if addr.strip()]
 
     subject, html_body = format_brief_email(brief_response)
 
@@ -104,7 +110,7 @@ def send_brief_email(brief_response: BriefResponse) -> None:
     msg = MIMEMultipart("alternative")
     msg["Subject"] = subject
     msg["From"]    = sender
-    msg["To"]      = recipient
+    msg["To"]      = ", ".join(recipients)  # Shows all recipients in the To: header
 
     # Plain-text fallback for clients that don't render HTML
     b = brief_response.brief
@@ -131,5 +137,6 @@ def send_brief_email(brief_response: BriefResponse) -> None:
     # 📘 SMTP_SSL connects on port 465 with TLS from the start.
     # Gmail requires TLS — regular port 25 or STARTTLS (587) also work but 465 is simplest.
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender, password)         # Authenticate with App Password
-        server.sendmail(sender, recipient, msg.as_string())
+        server.login(sender, password)
+        # 📘 sendmail() accepts a list of recipients — delivers one copy to each address.
+        server.sendmail(sender, recipients, msg.as_string())
