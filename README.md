@@ -186,6 +186,20 @@ Every decision below was made against the specific constraints of this exercise 
 
 ---
 
+## Scope Decisions
+
+The choices below were made deliberately given the 2–3 hour time constraint. Each has a clear production path.
+
+| Decision | This Submission | Production Path |
+|---|---|---|
+| **CORS** | `allow_origins=["*"]` — open so any reviewer can run locally without config | Restrict to deployed Netlify domain via environment variable |
+| **Database** | SQLite — zero external setup, runs anywhere, file-based | PostgreSQL — swap one file (`database.py`); interface and all other code unchanged |
+| **Frontend tests** | Omitted for scope | Vitest + React Testing Library — component behavior and API integration |
+| **Authentication** | Not required by the exercise | Session or JWT auth layer before any real user data |
+| **CI/CD** | Not configured | GitHub Actions: run `pytest` on push, block merge on failure |
+
+---
+
 ## What Is Planned — Phase 2
 
 The following feature is designed and ready to build. It was intentionally deferred to keep the Phase 1 submission clean and on time.
@@ -199,7 +213,7 @@ On-demand button press calls the OpenAI API with the current task list and retur
 - **Completed Yesterday** — tasks marked complete in the last 24 hours
 - **Priority Order** — recommended execution sequence
 
-The system prompt is treated as an API contract — explicit JSON schema, field-by-field validation before any output renders. Same discipline applied to the PDGM Lookup guardrails: an API that can return bad output gets explicit failure handling, not trust.
+The system prompt is treated as an API contract — explicit JSON schema, field-by-field validation before any output renders. An API that can return bad output gets explicit failure handling, not trust.
 
 Phase 2 version adds an APScheduler job delivering the brief by email at 0700 local time.
 
@@ -213,6 +227,16 @@ Phase 2 version adds an APScheduler job delivering the brief by email at 0700 lo
 | `OPENAI_API_KEY` | `backend/.env` | Phase 2 only — not required for Phase 1 |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
+
+---
+
+## Development Approach
+
+This project was built using an AI-assisted development workflow with intentional inline documentation throughout the codebase. The comments are written to explain not just *what* the code does but *why* — including architectural decisions, tradeoffs, validation behavior, and request flow. This serves two purposes: it reduces onboarding friction for anyone reviewing the code, and it functions as a learning reinforcement mechanism during development.
+
+As a software engineering student transitioning from a healthcare background, I built this workflow specifically to ensure I can explain every line I submit. The comment density is deliberate, not incidental. I can walk through the full request lifecycle — from a React form submission through the Axios call, FastAPI routing, Pydantic validation, SQLite write, and state update — and explain why each layer is structured the way it is.
+
+This aligns directly with the note in the exercise prompt: *"We care that you understand the code you submit and can speak to your decisions."*
 
 ---
 
