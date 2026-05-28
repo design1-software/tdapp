@@ -206,7 +206,7 @@ The following feature is designed and ready to build. It was intentionally defer
 
 ### TDApp Day Brief — AI-Powered Daily Summary
 
-On-demand button press calls the OpenAI API with the current task list and returns a structured daily brief in OPORD format:
+On-demand button press calls Claude Sonnet (via the Anthropic API) with the current task list and returns a structured daily brief in OPORD format:
 
 - **Situation** — overall task load and completion status
 - **Tasks for Today** — active tasks in priority order
