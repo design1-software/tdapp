@@ -10,9 +10,9 @@
 
 | | URL |
 |---|---|
-| **Live App** | `[NETLIFY_URL]` — update after deployment |
-| **Live API** | `[RAILWAY_URL]` — update after deployment |
-| **API Docs** | `[RAILWAY_URL]/docs` — interactive, no setup required |
+| **Live App** | https://tdlistapp-ex.netlify.app |
+| **Live API** | https://tdapp-production.up.railway.app |
+| **API Docs** | https://tdapp-production.up.railway.app/docs — interactive, no setup required |
 | **GitHub** | github.com/design1-software/tdapp |
 
 ---
@@ -146,7 +146,7 @@ All tests run against an isolated in-memory test database — no data from your 
 
 ## API Reference
 
-Full interactive documentation at `[RAILWAY_URL]/docs` (live) or `http://localhost:8000/docs` (local). Every endpoint is testable directly from that page without a separate client.
+Full interactive documentation at [tdapp-production.up.railway.app/docs](https://tdapp-production.up.railway.app/docs) (live) or `http://localhost:8000/docs` (local). Every endpoint is testable directly from that page without a separate client.
 
 | Endpoint | What It Does |
 |---|---|
