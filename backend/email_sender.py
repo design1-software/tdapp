@@ -1,16 +1,20 @@
-# 📘 WHAT THIS FILE DOES: Formats and sends the Day Brief as an HTML email via Gmail SMTP.
-# Uses Python's built-in smtplib — no extra dependencies needed.
-# Gmail requires an App Password (not your regular password) when 2FA is on.
-# How to get one: Google Account → Security → 2-Step Verification → App Passwords
-# 🔗 smtplib reference: https://www.w3schools.com/python/module_smtplib.asp
+# 📘 WHAT THIS FILE DOES: Formats and sends the Day Brief as an HTML email via Resend.
+# Resend is an HTTP-based email API — no SMTP needed, works on all hosting platforms.
+# We use httpx (already in requirements.txt) to make the API call over HTTPS.
+# 🔗 Resend API reference: https://resend.com/docs/api-reference/emails/send-email
+# 🔗 httpx reference: https://www.python-httpx.org/
 
 import os
-import smtplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import httpx
 from datetime import datetime
 
 from models import BriefResponse
+
+# 📘 Resend's shared sender address — works on the free tier without a verified domain.
+# If you own a domain and verify it with Resend, you can set EMAIL_FROM to any address
+# on that domain (e.g. "briefs@yourdomain.com") via the Railway env var.
+RESEND_DEFAULT_FROM = "onboarding@resend.dev"
+RESEND_API_URL = "https://api.resend.com/emails"
 
 
 def format_brief_email(brief_response: BriefResponse) -> tuple[str, str]:
@@ -28,7 +32,7 @@ def format_brief_email(brief_response: BriefResponse) -> tuple[str, str]:
     # 📘 fromisoformat() parses the ISO datetime string stored in generated_at.
     # strftime() converts it to a human-readable format for the email subject.
     generated_at = datetime.fromisoformat(brief_response.generated_at)
-    date_str = generated_at.strftime("%A, %B %-d, %Y")  # e.g. "Wednesday, May 28, 2026"
+    date_str = generated_at.strftime("%A, %B %-d, %Y")  # e.g. "Thursday, May 29, 2026"
 
     subject = f"TDApp Day Brief — {date_str}"
 
@@ -70,28 +74,25 @@ def format_brief_email(brief_response: BriefResponse) -> tuple[str, str]:
 
 def send_brief_email(brief_response: BriefResponse) -> None:
     """
-    Send the formatted Day Brief via Gmail SMTP.
+    Send the formatted Day Brief via the Resend email API.
 
-    Reads three environment variables:
-        EMAIL_FROM         — the Gmail address sending the email
-        EMAIL_APP_PASSWORD — Gmail App Password (not your account password)
-        EMAIL_TO           — one or more recipient addresses, comma-separated
-                             e.g. "alice@gmail.com" or "alice@gmail.com, bob@gmail.com"
+    Reads two required environment variables:
+        RESEND_API_KEY — API key from resend.com
+        EMAIL_TO       — one or more recipient addresses, comma-separated
+                         e.g. "alice@gmail.com" or "alice@gmail.com, bob@gmail.com"
 
-    Raises EnvironmentError if any variable is missing.
-    Raises smtplib.SMTPException if the connection or login fails.
+    EMAIL_FROM is optional — defaults to Resend's shared sender (onboarding@resend.dev).
+    Set it to a custom address only if you have a verified domain on Resend.
+
+    Raises EnvironmentError if RESEND_API_KEY or EMAIL_TO is missing.
+    Raises httpx.HTTPStatusError if the Resend API rejects the request.
     """
-    sender   = os.environ.get("EMAIL_FROM")
-    password = os.environ.get("EMAIL_APP_PASSWORD")
-    to_raw   = os.environ.get("EMAIL_TO")
+    api_key = os.environ.get("RESEND_API_KEY")
+    to_raw  = os.environ.get("EMAIL_TO")
+    sender  = os.environ.get("EMAIL_FROM", RESEND_DEFAULT_FROM)
 
-    # 📘 Check for all three before trying to connect — fail fast with a clear message.
-    missing = [k for k, v in {
-        "EMAIL_FROM": sender,
-        "EMAIL_APP_PASSWORD": password,
-        "EMAIL_TO": to_raw,
-    }.items() if not v]
-
+    # 📘 Check required vars before making any network call — fail fast with a clear message.
+    missing = [k for k, v in {"RESEND_API_KEY": api_key, "EMAIL_TO": to_raw}.items() if not v]
     if missing:
         raise EnvironmentError(
             f"Missing required email environment variable(s): {', '.join(missing)}"
@@ -99,44 +100,26 @@ def send_brief_email(brief_response: BriefResponse) -> None:
 
     # 📘 Split EMAIL_TO on commas so a single variable supports multiple recipients.
     # "alice@gmail.com, bob@gmail.com" → ["alice@gmail.com", "bob@gmail.com"]
-    # strip() removes any accidental whitespace around each address.
     recipients = [addr.strip() for addr in to_raw.split(",") if addr.strip()]
 
     subject, html_body = format_brief_email(brief_response)
 
-    # 📘 MIMEMultipart("alternative") creates a message with two versions:
-    # a plain-text fallback and an HTML version. Email clients that support HTML
-    # show the styled version; others fall back to plain text automatically.
-    msg = MIMEMultipart("alternative")
-    msg["Subject"] = subject
-    msg["From"]    = sender
-    msg["To"]      = ", ".join(recipients)  # Shows all recipients in the To: header
+    # 📘 Resend accepts a simple JSON payload over HTTPS — no SMTP socket needed.
+    # The Authorization header carries the API key as a Bearer token.
+    payload = {
+        "from":    sender,
+        "to":      recipients,
+        "subject": subject,
+        "html":    html_body,
+    }
 
-    # Plain-text fallback for clients that don't render HTML
-    b = brief_response.brief
-    plain_lines = [
-        subject,
-        "",
-        "SITUATION",
-        b.situation,
-        "",
-        "PRIORITY ORDER",
-    ]
-    plain_lines += [f"{i + 1}. {t}" for i, t in enumerate(b.priority_order)] or ["None"]
-    plain_lines += ["", "ACTIVE TASKS"]
-    plain_lines += [f"- {t}" for t in b.tasks_for_today] or ["None"]
-    plain_lines += ["", "COMPLETED (LAST 24H)"]
-    plain_lines += [f"- {t}" for t in b.completed_recently] or ["None"]
-    plain_text = "\n".join(plain_lines)
-
-    # 📘 Attach plain text first, then HTML. RFC 2822 says the last part takes precedence,
-    # so HTML-capable clients will render the HTML version.
-    msg.attach(MIMEText(plain_text, "plain"))
-    msg.attach(MIMEText(html_body, "html"))
-
-    # 📘 SMTP_SSL connects on port 465 with TLS from the start.
-    # Gmail requires TLS — regular port 25 or STARTTLS (587) also work but 465 is simplest.
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(sender, password)
-        # 📘 sendmail() accepts a list of recipients — delivers one copy to each address.
-        server.sendmail(sender, recipients, msg.as_string())
+    # 📘 httpx.post() sends an HTTP POST request and returns a response object.
+    # raise_for_status() turns any 4xx/5xx response into a Python exception,
+    # so callers don't have to check the status code manually.
+    response = httpx.post(
+        RESEND_API_URL,
+        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+        json=payload,
+        timeout=15,
+    )
+    response.raise_for_status()
