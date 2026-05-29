@@ -122,4 +122,11 @@ def send_brief_email(brief_response: BriefResponse) -> None:
         json=payload,
         timeout=15,
     )
-    response.raise_for_status()
+
+    # 📘 Include Resend's response body in the exception so callers can see the exact error.
+    if response.is_error:
+        raise httpx.HTTPStatusError(
+            f"Resend {response.status_code}: {response.text}",
+            request=response.request,
+            response=response,
+        )
