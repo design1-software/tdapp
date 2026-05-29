@@ -239,6 +239,35 @@ An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07
 - Supports one or multiple recipients: set `EMAIL_TO` to a comma-separated list
 - Requires three Railway environment variables (see Environment Variables section below)
 
+### Receiving the Daily Brief — Configuration Options
+
+The current implementation is single-tenant: whoever controls the Railway environment variables controls who gets the email. That is appropriate for this scope. A production path with real users has three options depending on the requirement:
+
+| Option | How It Works | When to Use |
+|---|---|---|
+| **Env var (current)** | Set `EMAIL_TO` in Railway dashboard. Comma-separate for multiple addresses: `alice@gmail.com, bob@gmail.com`. No code change needed. | Small team, one operator, fixed recipient list |
+| **In-app settings field** | Add an Email field to a user Settings page. Store the address in the database. Scheduler reads recipient from DB at send time instead of env var. Requires a settings route (`PATCH /settings`) and a one-row settings table. | Single user controls their own address without touching the server |
+| **User accounts + preferences** | Full auth layer (session or JWT). Each user record includes `email` and `notify_daily: bool`. Scheduler queries all users where `notify_daily = true` and sends individually. | Multi-user app where each person manages their own subscription |
+
+**To add your email right now (current deployment):**
+
+1. Google Account → Security → 2-Step Verification → App Passwords → create one named "TDApp"
+2. Railway dashboard → your service → Variables → add:
+
+```
+EMAIL_FROM         = yourgmail@gmail.com
+EMAIL_APP_PASSWORD = (16-character app password from step 1)
+EMAIL_TO           = your@email.com
+```
+
+3. Railway redeploys automatically. Brief arrives at 07:00 Eastern.
+
+To add a second recipient, append to `EMAIL_TO` with a comma — no redeploy needed if you edit the variable in place:
+
+```
+EMAIL_TO = you@gmail.com, colleague@gmail.com
+```
+
 ---
 
 ## Environment Variables
