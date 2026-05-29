@@ -88,7 +88,7 @@ The name follows federal naming convention. Government programs run on acronyms.
 
 ### AI Features
 - **Day Brief** — on-demand button calls Claude Sonnet 4.6 (Anthropic API) with the current task list and returns a structured daily brief: situation overview, active tasks, completed in the last 24 hours, and AI-recommended priority order. System prompt is a strict JSON schema contract; every field is validated by Pydantic before anything renders.
-- **Daily Email** — APScheduler background job fires at 07:00 Eastern every day, generates the same brief, and sends an HTML-formatted email via Gmail SMTP. Supports one or multiple recipients via a comma-separated `EMAIL_TO` environment variable.
+- **Daily Email** — APScheduler background job fires at 07:00 Eastern every day, generates the same brief, and sends an HTML-formatted email via the Resend API. Supports one or multiple recipients via a comma-separated `EMAIL_TO` environment variable.
 
 ---
 
@@ -144,7 +144,7 @@ tdapp/
 │   │   └── brief.py            # POST /brief — thin HTTP wrapper around brief_service
 │   ├── brief_service.py        # Core brief logic — shared by /brief endpoint and scheduler
 │   ├── scheduler.py            # APScheduler setup — daily_brief_job() at 07:00 Eastern
-│   ├── email_sender.py         # Gmail SMTP — format_brief_email() + send_brief_email()
+│   ├── email_sender.py         # Resend API — format_brief_email() + send_brief_email()
 │   ├── tests/
 │   │   ├── test_tasks.py       # pytest suite using FastAPI TestClient (24 tests)
 │   │   ├── test_brief.py       # Brief endpoint tests — mocks Claude, tests validation (8 tests)
@@ -241,7 +241,7 @@ Every decision below was made against the specific constraints of this exercise 
 | **Vite over Create React App** | CRA is deprecated. Vite is the current standard — faster builds, smaller output, actively maintained. |
 | **Anthropic SDK + Claude Sonnet 4.6** | System prompt defines an explicit JSON schema — Claude returns structured data, not prose. Pydantic validates every field before anything reaches the client. `call_claude()` is isolated in `brief_service.py` so tests can patch it cleanly without making real API calls. |
 | **APScheduler (BackgroundScheduler)** | Runs as a daemon thread inside the existing uvicorn process — no separate worker or process needed. FastAPI's `lifespan` context manager starts it on deploy and stops it cleanly on shutdown. |
-| **smtplib (stdlib)** | No extra dependency for email delivery. Gmail SMTP over port 465 with TLS. App Password avoids storing the account password. `EMAIL_TO` is comma-separated so multiple recipients require no code change. |
+| **Resend (HTTP API)** | Railway free tier blocks outbound SMTP (port 465). Resend sends over HTTPS (port 443) which is always open. Uses `httpx` already in requirements — no new dependency. `EMAIL_TO` is comma-separated so multiple recipients require no code change. |
 
 ---
 
@@ -272,6 +272,7 @@ The choices below were made deliberately given the 2–3 hour time constraint. E
 | **Authentication** | Not required by the exercise | Session or JWT auth layer before any real user data |
 | **CI/CD** | Not configured | GitHub Actions: run `pytest` on push, block merge on failure |
 | **AI model** | `claude-sonnet-4-6` — cost-efficient, fast, sufficient for structured JSON output | GPT-4o or Gemini as drop-in alternatives — `call_claude()` is isolated in `brief_service.py` so the swap is one function |
+| **Email provider** | Resend free tier — works on Railway (HTTPS, no SMTP block). Free tier sends only to the account owner's email | Twilio SendGrid, Postmark, or any transactional provider with a verified domain — `send_brief_email()` is isolated in `email_sender.py`; swapping is a one-file change |
 
 ---
 
@@ -291,11 +292,12 @@ The system prompt is treated as an API contract, not a suggestion. If Claude ret
 
 ### Daily Email at 07:00
 
-An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07:00 Eastern every day. The job calls the same `brief_service.build_brief()` function used by the HTTP endpoint, formats the result as an HTML email, and sends it via Gmail SMTP.
+An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07:00 Eastern every day. The job calls the same `brief_service.build_brief()` function used by the HTTP endpoint, formats the result as an HTML email, and sends it via the Resend API.
 
 - All errors are caught and logged — a failed send never crashes the server
 - Supports one or multiple recipients: set `EMAIL_TO` to a comma-separated list
-- Requires three Railway environment variables (see Environment Variables section below)
+- Requires `RESEND_API_KEY` and `EMAIL_TO` environment variables on Railway (see Environment Variables section below)
+- **Deployment note:** Resend's free tier sends only to the account owner's email. For multi-recipient production use, a transactional email platform with a verified domain — such as Twilio SendGrid or Postmark — is the correct path. `send_brief_email()` is isolated in `email_sender.py` so swapping providers is a one-file change.
 
 ---
 
@@ -305,8 +307,7 @@ An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07
 |---|---|---|
 | `VITE_API_URL` | Netlify dashboard | Points to the Railway backend URL — must include `https://` |
 | `ANTHROPIC_API_KEY` | Railway dashboard | Required for `POST /brief` and the daily email scheduler |
-| `EMAIL_FROM` | Railway dashboard | Gmail address that sends the daily brief |
-| `EMAIL_APP_PASSWORD` | Railway dashboard | Gmail App Password (not your account password) — Google Account → Security → App Passwords |
+| `RESEND_API_KEY` | Railway dashboard | API key from resend.com — used to send the daily brief email |
 | `EMAIL_TO` | Railway dashboard | Recipient address(es). Comma-separated for multiple: `alice@gmail.com, bob@gmail.com` |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
