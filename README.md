@@ -92,6 +92,16 @@ The name follows federal naming convention. Government programs run on acronyms.
 
 ---
 
+## Development Approach
+
+This project was built using an AI-assisted development workflow with intentional inline documentation throughout the codebase. The comments are written to explain not just *what* the code does but *why* — including architectural decisions, tradeoffs, validation behavior, and request flow. This serves two purposes: it reduces onboarding friction for anyone reviewing the code, and it functions as a learning reinforcement mechanism during development.
+
+As a software engineering student transitioning from a healthcare background, I built this workflow specifically to ensure I can explain every line I submit. The comment density is deliberate, not incidental. I can walk through the full request lifecycle — from a React form submission through the Axios call, FastAPI routing, Pydantic validation, SQLite write, and state update — and explain why each layer is structured the way it is.
+
+This aligns directly with the note in the exercise prompt: *"We care that you understand the code you submit and can speak to your decisions."*
+
+---
+
 ## Architecture & Deployment
 
 TDApp is deployed as two independent services. This is a deliberate architectural decision, not a constraint.
@@ -261,6 +271,7 @@ The choices below were made deliberately given the 2–3 hour time constraint. E
 | **Frontend tests** | Omitted for scope | Vitest + React Testing Library — component behavior and API integration |
 | **Authentication** | Not required by the exercise | Session or JWT auth layer before any real user data |
 | **CI/CD** | Not configured | GitHub Actions: run `pytest` on push, block merge on failure |
+| **AI model** | `claude-sonnet-4-6` — cost-efficient, fast, sufficient for structured JSON output | GPT-4o or Gemini as drop-in alternatives — `call_claude()` is isolated in `brief_service.py` so the swap is one function |
 
 ---
 
@@ -299,16 +310,6 @@ An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07
 | `EMAIL_TO` | Railway dashboard | Recipient address(es). Comma-separated for multiple: `alice@gmail.com, bob@gmail.com` |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
-
----
-
-## Development Approach
-
-This project was built using an AI-assisted development workflow with intentional inline documentation throughout the codebase. The comments are written to explain not just *what* the code does but *why* — including architectural decisions, tradeoffs, validation behavior, and request flow. This serves two purposes: it reduces onboarding friction for anyone reviewing the code, and it functions as a learning reinforcement mechanism during development.
-
-As a software engineering student transitioning from a healthcare background, I built this workflow specifically to ensure I can explain every line I submit. The comment density is deliberate, not incidental. I can walk through the full request lifecycle — from a React form submission through the Axios call, FastAPI routing, Pydantic validation, SQLite write, and state update — and explain why each layer is structured the way it is.
-
-This aligns directly with the note in the exercise prompt: *"We care that you understand the code you submit and can speak to your decisions."*
 
 ---
 
