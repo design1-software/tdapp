@@ -39,8 +39,9 @@ The name follows federal naming convention. Government programs run on acronyms.
 - **Clear completed** — remove all completed tasks in one action
 - **Inline edit** — update task title without deleting and recreating
 
-### AI Feature
+### AI Features
 - **Day Brief** — on-demand button calls Claude Sonnet 4.6 (Anthropic API) with the current task list and returns a structured daily brief: situation overview, active tasks, completed in the last 24 hours, and AI-recommended priority order. System prompt is a strict JSON schema contract; every field is validated by Pydantic before anything renders.
+- **Daily Email** — APScheduler background job fires at 07:00 Eastern every day, generates the same brief, and sends an HTML-formatted email via Gmail SMTP. Supports one or multiple recipients via a comma-separated `EMAIL_TO` environment variable.
 
 ---
 
@@ -83,10 +84,14 @@ tdapp/
 │   ├── database.py             # SQLite connection, table init, all CRUD functions
 │   ├── routers/
 │   │   ├── tasks.py            # Route handlers — thin layer, logic in database.py
-│   │   └── brief.py            # POST /brief — Claude Sonnet call, JSON validation, response
+│   │   └── brief.py            # POST /brief — thin HTTP wrapper around brief_service
+│   ├── brief_service.py        # Core brief logic — shared by /brief endpoint and scheduler
+│   ├── scheduler.py            # APScheduler setup — daily_brief_job() at 07:00 Eastern
+│   ├── email_sender.py         # Gmail SMTP — format_brief_email() + send_brief_email()
 │   ├── tests/
 │   │   ├── test_tasks.py       # pytest suite using FastAPI TestClient (24 tests)
-│   │   └── test_brief.py       # Brief endpoint tests — mocks Claude, tests validation (8 tests)
+│   │   ├── test_brief.py       # Brief endpoint tests — mocks Claude, tests validation (8 tests)
+│   │   └── test_scheduler.py   # Scheduler job tests — mocks Claude + email sender (8 tests)
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
@@ -177,7 +182,9 @@ Every decision below was made against the specific constraints of this exercise 
 | **pytest + TestClient** | Tests actual HTTP endpoints end-to-end — route handler, Pydantic validation, database, and response — not just isolated functions. This is what critical path testing means in practice. |
 | **Railway + Netlify** | Two platforms because two fundamentally different runtime types. See Architecture section above. |
 | **Vite over Create React App** | CRA is deprecated. Vite is the current standard — faster builds, smaller output, actively maintained. |
-| **Anthropic SDK + Claude Sonnet 4.6** | System prompt defines an explicit JSON schema — Claude returns structured data, not prose. Pydantic validates every field before anything reaches the client. `_call_claude()` is isolated into its own function so tests can patch it cleanly without making real API calls. |
+| **Anthropic SDK + Claude Sonnet 4.6** | System prompt defines an explicit JSON schema — Claude returns structured data, not prose. Pydantic validates every field before anything reaches the client. `call_claude()` is isolated in `brief_service.py` so tests can patch it cleanly without making real API calls. |
+| **APScheduler (BackgroundScheduler)** | Runs as a daemon thread inside the existing uvicorn process — no separate worker or process needed. FastAPI's `lifespan` context manager starts it on deploy and stops it cleanly on shutdown. |
+| **smtplib (stdlib)** | No extra dependency for email delivery. Gmail SMTP over port 465 with TLS. App Password avoids storing the account password. `EMAIL_TO` is comma-separated so multiple recipients require no code change. |
 
 ---
 
@@ -210,9 +217,11 @@ The choices below were made deliberately given the 2–3 hour time constraint. E
 
 ---
 
-## What Is Shipped — Day Brief
+## What Is Shipped — AI Features
 
-The AI Day Brief feature is live. Clicking **✦ Generate Day Brief** in the app calls `POST /brief`, which:
+### On-Demand Day Brief
+
+Clicking **✦ Generate Day Brief** in the app calls `POST /brief`, which:
 
 1. Pulls all tasks from the database
 2. Splits them: active tasks vs. completed in the last 24 hours (tracked by `completed_at` timestamp)
@@ -222,11 +231,13 @@ The AI Day Brief feature is live. Clicking **✦ Generate Day Brief** in the app
 
 The system prompt is treated as an API contract, not a suggestion. If Claude returns malformed output or omits a field, the endpoint returns 502 — it does not forward unvalidated AI output.
 
-## What Is Planned — Phase 2
+### Daily Email at 07:00
 
-### Scheduled Daily Email
+An APScheduler `BackgroundScheduler` starts with the FastAPI app and fires at 07:00 Eastern every day. The job calls the same `brief_service.build_brief()` function used by the HTTP endpoint, formats the result as an HTML email, and sends it via Gmail SMTP.
 
-The remaining Phase 2 item: an APScheduler job that runs at 0700 local time, calls the same `POST /brief` logic, and delivers the brief by email. The generation and validation logic is already built — Phase 2 adds the scheduler and the email transport layer.
+- All errors are caught and logged — a failed send never crashes the server
+- Supports one or multiple recipients: set `EMAIL_TO` to a comma-separated list
+- Requires three Railway environment variables (see Environment Variables section below)
 
 ---
 
@@ -234,8 +245,11 @@ The remaining Phase 2 item: an APScheduler job that runs at 0700 local time, cal
 
 | Variable | Where | Purpose |
 |---|---|---|
-| `VITE_API_URL` | `frontend/.env` | Points to the Railway backend URL — must include `https://` |
-| `ANTHROPIC_API_KEY` | `backend/.env` | Required for `POST /brief` (Day Brief feature). Set in Railway environment variables. |
+| `VITE_API_URL` | Netlify dashboard | Points to the Railway backend URL — must include `https://` |
+| `ANTHROPIC_API_KEY` | Railway dashboard | Required for `POST /brief` and the daily email scheduler |
+| `EMAIL_FROM` | Railway dashboard | Gmail address that sends the daily brief |
+| `EMAIL_APP_PASSWORD` | Railway dashboard | Gmail App Password (not your account password) — Google Account → Security → App Passwords |
+| `EMAIL_TO` | Railway dashboard | Recipient address(es). Comma-separated for multiple: `alice@gmail.com, bob@gmail.com` |
 
 Never commit a real `.env` file. The `.env.example` files in this repo contain placeholder values only.
 
