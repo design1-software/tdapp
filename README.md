@@ -17,6 +17,53 @@
 
 ---
 
+## Live State — What the Reviewer Will See
+
+The live database is pre-seeded with a realistic task mix so every feature is immediately visible on arrival — no setup required.
+
+**Active tasks (6):**
+| Task | Due |
+|---|---|
+| Respond to client feedback on wireframes | — |
+| Send weekly status report | May 29 |
+| Prep talking points for stakeholder meeting | — |
+| Review Q2 project proposal | May 30 |
+| Schedule team standup for next sprint | May 29 |
+| Update API documentation | Jun 2 |
+
+**Completed in last 24h (3):**
+- Submit timesheet for pay period
+- Finalize onboarding checklist
+- Review pull request from dev team
+
+**Sample Day Brief generated from this task list:**
+
+```json
+{
+  "situation": "You have 6 active tasks requiring attention today, spanning communication,
+                documentation, and planning responsibilities. 3 tasks were completed in
+                the last 24 hours, indicating solid recent progress.",
+  "priority_order": [
+    "Respond to client feedback on wireframes",
+    "Send weekly status report",
+    "Prep talking points for stakeholder meeting",
+    "Review Q2 project proposal",
+    "Schedule team standup for next sprint",
+    "Update API documentation"
+  ],
+  "tasks_for_today": [ "...same 6 active tasks..." ],
+  "completed_recently": [
+    "Submit timesheet for pay period",
+    "Finalize onboarding checklist",
+    "Review pull request from dev team"
+  ]
+}
+```
+
+Reviewers can add, edit, complete, and delete tasks freely — the brief regenerates from whatever is in the database at the time the button is pressed.
+
+---
+
 ## What Is TDApp
 
 TDApp (ToDo Application) is a full-stack task management application built as a response to the Amplify Federal internship coding exercise. It implements full CRUD task management with a FastAPI backend, SQLite persistence, and a React frontend — deployed as two independent services following a clean separation-of-concerns architecture.
